@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.db
+*.sqlite
+*.bak
+.pytest_cache/
+.DS_Store

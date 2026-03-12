@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: welltower
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: welltower
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      LOAD_FAKE_DATA: "true"
+      NUM_PROPERTIES: 5
+      MIN_UNITS_PER_PROPERTY: 5
+      MAX_UNITS_PER_PROPERTY: 15
+      RESIDENTS_RATIO: "0.7"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

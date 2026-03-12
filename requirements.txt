@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+pytest
+faker
+httpx
+psycopg2-binary
+python-dotenv
