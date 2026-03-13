@@ -31,11 +31,15 @@ def clear_all_data(db_name: str):
         conn = psycopg2.connect(**get_connection_params(db_name))
         cursor = conn.cursor()
         
-        tables = ['scd', 'residents', 'units', 'rentroll', 'properties']
-        
+        tables = [
+            'rentroll',
+            'residents_scd2', 'units_scd2', 'properties_scd2',
+            'residents', 'units', 'properties',
+        ]
+
         for table in tables:
             try:
-                cursor.execute(f"DELETE FROM {table}")
+                cursor.execute(f"TRUNCATE {table} RESTART IDENTITY CASCADE")
                 print(f"✓ Cleared {table}")
             except psycopg2.Error as e:
                 print(f"⚠ Could not clear {table}: {e}")

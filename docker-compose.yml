@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:15
+    build: ./postgres
+    command: postgres -c shared_preload_libraries=pg_cron -c cron.database_name=welltower
     environment:
       POSTGRES_DB: welltower
       POSTGRES_USER: postgres
@@ -9,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -24,15 +26,54 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       LOAD_FAKE_DATA: "true"
-      NUM_PROPERTIES: 5
-      MIN_UNITS_PER_PROPERTY: 5
-      MAX_UNITS_PER_PROPERTY: 15
+      NUM_PROPERTIES: 3
+      MIN_UNITS_PER_PROPERTY: 4
+      MAX_UNITS_PER_PROPERTY: 1000
       RESIDENTS_RATIO: "0.7"
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+
+  postgres-test:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - test
+
+  test:
+    build: .
+    command: pytest test_api.py -v
+    environment:
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    profiles:
+      - test
+
+  frontend:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
